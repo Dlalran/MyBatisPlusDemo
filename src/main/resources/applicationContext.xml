@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+<!--    2通过property-placeholder引入properties文件 第一种方法在SMDemo中-->
+<!--    注意：该标签system-propertie-mode默认为ENVIRONMENT，即获取属性时先从系统环境中寻找，有可能会错误获取同名的其他系统变量
+        解决方法：1在properties文件变量前添加jdbc前缀，2或者修改参数为FALLBACK-->
+    <context:property-placeholder location="classpath:db.properties" system-properties-mode="FALLBACK"/>
+
+<!--    配置数据源从C3P0数据池获取-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+<!--    引入事务管理器-->
+    <bean id="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+<!--        注入数据源-->
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+<!--    配置使用的事务管理器-->
+    <tx:annotation-driven transaction-manager="dataSourceTransactionManager"/>
+
+<!--    Spring托管MyBatis-->
+<!--    <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">-->
+
+<!--    Spring托管MyBatisPlus，改为MyBatisSqlSessionFactoryBean-->
+    <bean id="sqlSessionFactoryBean" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+
+<!--        数据源-->
+        <property name="dataSource" ref="dataSource"/>
+<!--        MyBatis配置文件-->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+<!--        自动生成别名的包-->
+        <property name="typeAliasesPackage" value="priv.howard.mybatisplusdemo.entity"/>
+<!--        MyBatisPlus不需要mapper配置文件，这里用于扫描MyBatisPlus Generator生成的在Resource中的xml-->
+        <property name="mapperLocations" value="mapper/*.xml"/>
+
+<!--        全局配置GlobalConfig-->
+        <property name="globalConfig">
+            <bean class="com.baomidou.mybatisplus.core.config.GlobalConfig">
+<!--                设置SQL注入器为自定义注入器从而加入自定义SQL方法-->
+                <property name="dbConfig">
+                    <!--                    配置逻辑删除对应的未删除和已删除的值，不配置默认0为未删除，1为已删除-->
+                    <bean class="com.baomidou.mybatisplus.core.config.GlobalConfig$DbConfig">
+                        <property name="logicDeleteValue" value="1"/>
+                        <property name="logicNotDeleteValue" value="0"/>
+<!--                        配置Oracle的序列主键生成器-->
+                        <!--<property name="keyGenerator">
+                            <bean class="com.baomidou.mybatisplus.extension.incrementer.OracleKeyGenerator"/>
+                        </property>-->
+                    </bean>
+                </property>
+
+<!--                数据库相关配置内部类DbConfig-->
+                <property name="sqlInjector">
+                    <bean class="priv.howard.mybatisplusdemo.injector.MySqlInjector"/>
+                </property>
+
+                <!--    配置自定义字段填充处理器-->
+                <property name="metaObjectHandler">
+                    <bean class="priv.howard.mybatisplusdemo.handler.MyMetaObjectHandler"/>
+                </property>
+            </bean>
+        </property>
+
+<!--        加入拦截器，相当于MyBatis配置文件中的<plugins>-->
+        <property name="plugins">
+<!--            插件拦截器数组-->
+            <list>
+<!--                分页插件拦截器-->
+                <bean class="com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor">
+<!--                    阻断器数组，在其中加入攻击SQL阻断器，用于阻断对全表的更新删除操作-->
+                    <property name="sqlParserList">
+                        <list>
+                            <bean class="com.baomidou.mybatisplus.extension.parsers.BlockAttackSqlParser"/>
+                        </list>
+                    </property>
+                </bean>
+
+                <!-- SQL执行性能分析插件，3.2.0以上版本取消 -->
+                <bean class="com.baomidou.mybatisplus.extension.plugins.PerformanceInterceptor">
+                    <!--SQL执行最大时间 超过将被阻断-->
+                    <property name="maxTime" value="100" />
+                    <!--SQL语句输出是否格式化 默认false-->
+                    <property name="format" value="true" />
+                </bean>
+
+<!--                乐观锁插件，通过版本检查在更新数据时检查数据是否已被修改
+                    需要在实体类中增加version属性-->
+                <bean class="com.baomidou.mybatisplus.extension.plugins.OptimisticLockerInterceptor"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean"/>
+        <property name="basePackage" value="priv.howard.mybatisplusdemo.mapper"/>
+    </bean>
+</beans>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+<!--    在Spring配置文件中配置-->
+    <settings>
+        <setting name="logImpl" value="LOG4J"/>
+        <setting name="jdbcTypeForNull" value="NULL"/>
+
+<!--        禁用将数据库下划线分隔的字段名自动对应实体类中驼峰命名的属性名-->
+<!--        <setting name="mapUnderscoreToCamelCase" value="false"/>-->
+    </settings>
+    
+
+    <!--<environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+
+&lt;!&ndash;                MySQL8.0以上使用com.mysql.cj.jdbc.Driver驱动，以下使用com.mysql.jdbc.Driver &ndash;&gt;
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+&lt;!&ndash;                MySQL8.0以上需要显式指定不使用SSL加密，以及设置时区为Asia\Shanghai&ndash;&gt;
+&lt;!&ndash;                注意：如果直接在xml中给定url，如果有&特殊符号，需要使用xml转义字符&amp;，从properties中获取则不用&ndash;&gt;
+                <property name="url"
+                          value="jdbc:mysql://rm-wz93n38dxb0zb3yybao.mysql.rds.aliyuncs.com:3306/mybatisplus?useSSL=false&amp;serverTimezone=Asia/Shanghai"/>
+                <property name="username" value="howard"/>
+                <property name="password" value="123Howard"/>
+
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>-->
+    
+</configuration>
